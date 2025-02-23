@@ -1,0 +1,69 @@
+/* Container for the entire work progress section */
+.work-progress-container {
+    padding: 20px;
+    max-width: 100%;
+    margin: 0 auto;
+    margin-top: 50px;
+}
+
+/* Header styling */
+h2 {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Error message styling */
+.error {
+    color: red;
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* Table styling */
+.work-progress-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+/* Table headers styling */
+.work-progress-table th,
+.work-progress-table td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+    font-size: 16px;
+}
+
+/* Table header background color */
+.work-progress-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+/* Alternate row background color for better readability */
+.work-progress-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Styling for the buttons (if any buttons are added in the future) */
+button {
+    padding: 5px 10px;
+    margin: 5px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.complete-btn {
+    background-color: #4caf50;
+    color: white;
+}
+
+.complete-btn:hover {
+    background-color: #45a049;
+}
