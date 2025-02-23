@@ -18,7 +18,8 @@ router.post('/create', auth, createWorkProgress);
 router.get('/work-progress/:farmerId',getWorkProgressByFarmer);
 
 // Update work progress status (e.g., Accepted, Rejected, etc.)
-router.put('/work-progress/update',updateWorkProgressStatus);
+router.patch("/work-progress/update/:id", updateWorkProgressStatus);
+
 
 // Route to update worker status
 router.put('/update/worker/:workProgressId', auth, updateWorkerStatus);

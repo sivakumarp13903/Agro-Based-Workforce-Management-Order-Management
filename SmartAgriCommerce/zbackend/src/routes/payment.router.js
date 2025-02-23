@@ -1,22 +1,21 @@
 const express = require("express");
 const router = express.Router();
 const paymentController = require("../controllers/payment.controller");
-const verifyToken = require("../middleware/auth"); 
-const roleCheck = require("../middleware/roleCheck");
 
+// ✅ Create a new payment (Farmer verifies work)
+router.post("/create", paymentController.createPayment);
 
-router.post("/create", verifyToken, roleCheck(["farmer"]), paymentController.createPayment);
+// ✅ Fetch all payments for a specific worker
+router.get("/worker/:workerId", paymentController.getWorkerPayments);
 
-// 🔹 Route to get all payments (Admin Only)
-router.get("/all", verifyToken, roleCheck(["admin"]), paymentController.getAllPayments);
+// ✅ Fetch all payments for a specific farmer
+router.get("/farmer/:farmerId", paymentController.getFarmerPayments);
 
+// ✅ Update payment status (Pending → Sent or Verified)
+router.put("/update/:id", paymentController.updatePaymentStatus);
 
-router.get("/farmer", verifyToken, roleCheck(["farmer"]), paymentController.getFarmerPayments);
+// ✅ Worker verifies payment received
+router.put("/verify-worker/:id", paymentController.verifyWorkerPayment);
 
-
-router.get("/worker", verifyToken, roleCheck(["worker"]), paymentController.getWorkerPayments);
-
-// 🔹 Route to confirm payment (Worker Only)
-router.put("/confirm/:paymentId", verifyToken, roleCheck(["worker"]), paymentController.confirmPayment);
 
 module.exports = router;

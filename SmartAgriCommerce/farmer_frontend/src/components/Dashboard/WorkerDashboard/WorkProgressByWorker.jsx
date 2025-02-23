@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./WorkProgressByWorker.css"; // Add your styles here
+import "./WorkProgressByWorker.css"; 
 
 const WorkProgressForWorker = () => {
     const [workProgress, setWorkProgress] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [workerId] = useState(localStorage.getItem("workerId") || null);
+    const [successMessage, setSuccessMessage] = useState("");
 
     useEffect(() => {
         const fetchWorkProgress = async () => {
             try {
                 const response = await axios.get(`http://localhost:5000/api/workprogress/work-progress/worker/${workerId}`);
-                setWorkProgress(response.data); // Assuming response.data is the array of work progress
+                setWorkProgress(response.data);
             } catch (err) {
                 setError("Failed to load work progress");
                 console.error("Error fetching worker work progress:", err);
@@ -31,23 +32,27 @@ const WorkProgressForWorker = () => {
 
     const handleUpdateStatus = async (progressId, newStatus) => {
         try {
-            // Assuming `progressId` is unique for each work progress record
             const response = await axios.patch(
-                `http://localhost:5000/api/workprogress/update/${progressId}`,
-                { workerStatus: newStatus }
+                `http://localhost:5000/api/workprogress/work-progress/update/${progressId}`,
+                { status: newStatus }, // ✅ Ensure this matches backend
+                { headers: { "Content-Type": "application/json" } } // ✅ Ensure correct headers
             );
-            // Update the status in the frontend after the successful request
-            setWorkProgress((prevState) =>
-                prevState.map((progress) =>
-                    progress._id === progressId ? { ...progress, workerStatus: newStatus } : progress
-                )
-            );
-            alert("Status updated successfully");
+    
+            if (response.status === 200) {
+                setWorkProgress((prevState) =>
+                    prevState.map((progress) =>
+                        progress._id === progressId ? { ...progress, workerStatus: newStatus } : progress
+                    )
+                );
+                setSuccessMessage("Status updated successfully!");
+                setTimeout(() => setSuccessMessage(""), 3000);
+            }
         } catch (err) {
             setError("Failed to update status");
-            console.error("Error updating status:", err);
+            console.error("Error updating status:", err.response?.data || err.message);
         }
     };
+    
 
     return (
         <div className="work-progress-container">
@@ -57,39 +62,46 @@ const WorkProgressForWorker = () => {
                 <p>Loading work progress...</p>
             ) : error ? (
                 <p className="error">{error}</p>
-            ) : workProgress.length === 0 ? (
-                <p>No work progress found.</p>
             ) : (
-                <table className="work-progress-table">
-                    <thead>
-                        <tr>
-                            <th>Job Title</th>
-                            <th>Farmer Name</th>
-                            <th>Status</th>
-                            <th>Payment Status</th>
-                            <th>Farmer Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {workProgress.map((progress) => (
-                            <tr key={progress._id}>
-                                <td>{progress.jobId?.title || "N/A"}</td>
-                                <td>{progress.farmerId?.name || "N/A"}</td>
-                                <td>
-                                    {progress.workerStatus}{" "}
-                                    <button
-                                        onClick={() => handleUpdateStatus(progress._id, "Completed")}
-                                    >
-                                        Mark as Completed
-                                    </button>
-                                </td>
-                                <td>{progress.paymentStatus}</td>
-                                <td>{progress.farmerStatus}</td>
+                <>
+                    {successMessage && <p className="success">{successMessage}</p>}
+                    <table className="work-progress-table">
+                        <thead>
+                            <tr>
+                                <th>Job Title</th>
+                                <th>Farmer Name</th>
+                                <th>Status</th>
+                                <th>Farmer Status</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {workProgress.length > 0 ? (
+                                workProgress.map((progress) => (
+                                    <tr key={progress._id}>
+                                        <td>{progress.jobId?.title || "N/A"}</td>
+                                        <td>{progress.farmerId?.name || "N/A"}</td>
+                                        <td>
+                                            <select
+                                                value={progress.workerStatus}
+                                                onChange={(e) => handleUpdateStatus(progress._id, e.target.value)}
+                                            >
+                                                
+                                                <option value="arrived">Arrived</option>
+                                                <option value="work in progress">Work In Progress</option>
+                                                <option value="completed">Completed</option>
+                                            </select>
+                                        </td>
+                                        <td>{progress.farmerStatus}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="4">No work progress found.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </>
             )}
         </div>
     );

@@ -114,16 +114,17 @@ exports.updatePaymentStatus = async (req, res) => {
 
 exports.getWorkProgressByFarmer = async (req, res) => {
     try {
-        const farmerId = req.params.farmerId; // Get the farmerId from the route parameters
+        const farmerId = req.params.farmerId; // Extract farmer ID from request params
 
-        // Query the WorkProgress model for the specific farmer's work progress
-        const workProgress = await WorkProgress.find({ farmerId });
+        // Fetch work progress and populate jobId (title) & workerId (name)
+        const workProgress = await WorkProgress.find({ farmerId })
+            .populate("jobId", "title")  // Fetch job title
+            .populate("workerId", "name"); // Fetch worker name
 
-        if (!workProgress) {
+        if (!workProgress || workProgress.length === 0) {
             return res.status(404).json({ message: "No work progress found for this farmer" });
         }
 
-        // Send back the work progress data as a response
         return res.status(200).json(workProgress);
     } catch (error) {
         console.error("Error fetching work progress:", error);
@@ -131,41 +132,89 @@ exports.getWorkProgressByFarmer = async (req, res) => {
     }
 };
 
-// Controller function to update work progress status (if needed)
+
 exports.updateWorkProgressStatus = async (req, res) => {
     try {
-        const { applicationId, status } = req.body; // Get the applicationId and status from the request body
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!status) {
+            return res.status(400).json({ message: "Status is required" });
+        }
 
         const updatedWorkProgress = await WorkProgress.findByIdAndUpdate(
-            applicationId,
-            { status: status }, // Update the status field
-            { new: true } // Return the updated document
+            id,
+            { workerStatus: status },  // ✅ Ensure the field matches your MongoDB schema
+            { new: true }
         );
 
         if (!updatedWorkProgress) {
             return res.status(404).json({ message: "Work progress not found" });
         }
 
-        return res.status(200).json(updatedWorkProgress);
+        res.status(200).json({ message: "Work status updated successfully", updatedWorkProgress });
     } catch (error) {
         console.error("Error updating work progress:", error);
-        return res.status(500).json({ message: "Server error while updating work progress" });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
+
+// Controller function to update work progress status (if needed)
+// exports.updateWorkProgressStatus = async (req, res) => {
+//     try {
+//         console.log("🔹 Incoming Request to Update Work Progress"); // Debugging
+
+//         const { id } = req.params; 
+//         const { workerStatus, farmerStatus, paymentStatus } = req.body; 
+
+//         console.log("🔹 WorkProgress ID:", id);
+//         console.log("🔹 Data to Update:", { workerStatus, farmerStatus, paymentStatus });
+
+//         if (!id) {
+//             return res.status(400).json({ message: "WorkProgress ID is required" });
+//         }
+
+//         // Prepare update object dynamically
+//         const updateData = {};
+//         if (workerStatus) updateData.workerStatus = workerStatus;
+//         if (farmerStatus) updateData.farmerStatus = farmerStatus;
+//         if (paymentStatus) updateData.paymentStatus = paymentStatus;
+
+//         console.log("🔹 Update Data:", updateData); // Debugging
+
+//         const updatedWorkProgress = await WorkProgress.findByIdAndUpdate(
+//             id,
+//             { $set: updateData },
+//             { new: true, runValidators: true }
+//         );
+
+//         if (!updatedWorkProgress) {
+//             console.log("❌ WorkProgress not found!");
+//             return res.status(404).json({ message: "Work progress not found" });
+//         }
+
+//         console.log("✅ Work Progress Updated Successfully:", updatedWorkProgress);
+//         return res.status(200).json(updatedWorkProgress);
+//     } catch (error) {
+//         console.error("❌ Error updating work progress:", error.message);
+//         return res.status(500).json({ message: "Server error while updating work progress" });
+//     }
+// };
+
+
 exports.getWorkProgressByWorker = async (req, res) => {
-    const { workerId } = req.params; // Get the workerId from the route parameters
-
-    // Ensure the workerId is a valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(workerId)) {
-        return res.status(400).json({ message: 'Invalid workerId' });
-    }
-
     try {
-        const workProgress = await WorkProgress.find({ workerId: new mongoose.Types.ObjectId(workerId) }); // Fix here
+        const { workerId } = req.params;
+        
+        // Populate Job Title and Farmer Name
+        const workProgress = await WorkProgress.find({ workerId })
+            .populate("jobId", "title")  // Fetch Job Title only
+            .populate("farmerId", "name"); // Fetch Farmer Name only
+
         res.json(workProgress);
-    } catch (err) {
-        console.error("Error fetching work progress:", err);
-        res.status(500).json({ message: 'Server error' });
+    } catch (error) {
+        console.error("Error fetching work progress:", error);
+        res.status(500).json({ message: "Server error" });
     }
 };

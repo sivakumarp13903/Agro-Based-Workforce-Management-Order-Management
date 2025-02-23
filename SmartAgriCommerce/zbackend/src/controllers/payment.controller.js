@@ -1,88 +1,89 @@
 const Payment = require("../models/Payment");
 
-// ✅ Create a new payment
+// ✅ Create Payment when Farmer Verifies Work
 exports.createPayment = async (req, res) => {
     try {
-        const { jobId, workerId, amount, paymentMethod, gpayNumber } = req.body;
-
-        if (paymentMethod === "GPay" && !gpayNumber) {
-            return res.status(400).json({ message: "GPay number is required for online payments." });
+        const { jobId, farmerId, workerId } = req.body;
+        if (!jobId || !farmerId || !workerId) {
+            return res.status(400).json({ message: "Missing required fields" });
         }
+        
+        const newPayment = new Payment({ jobId, farmerId, workerId, paymentStatus: "pending" });
+        await newPayment.save();
 
-        const payment = new Payment({
-            jobId,
-            workerId,
-            farmerId: req.user.id, // Get farmer ID from authenticated user
-            amount,
-            paymentMethod,
-            gpayNumber: paymentMethod === "GPay" ? gpayNumber : undefined
-        });
-
-        await payment.save();
-        res.status(201).json({ message: "Payment initiated successfully.", payment });
-
+        res.status(201).json({ message: "Payment created successfully", newPayment });
     } catch (error) {
-        res.status(500).json({ message: "Error processing payment.", error });
+        console.error("Error creating payment:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
-// ✅ Get all payments (for admin)
-exports.getAllPayments = async (req, res) => {
-    try {
-        const payments = await Payment.find()
-            .populate("jobId", "title") // Populate job title
-            .populate("workerId", "name email phone") // Populate worker details
-            .populate("farmerId", "name email phone"); // Populate farmer details
-
-        res.json(payments);
-    } catch (error) {
-        console.error("Error retrieving payments:", error);
-        res.status(500).json({ message: "Error retrieving payments.", error: error.message });
-    }
-};
-
-// ✅ Get payments by farmer
-exports.getFarmerPayments = async (req, res) => {
-    try {
-        const payments = await Payment.find({ farmerId: req.user.id }).populate("jobId workerId");
-        res.status(200).json(payments);
-    } catch (error) {
-        res.status(500).json({ message: "Error retrieving payments.", error });
-    }
-};
-
-// ✅ Get payments by worker
+// ✅ Fetch All Payments for a Worker
 exports.getWorkerPayments = async (req, res) => {
     try {
-        const payments = await Payment.find({ workerId: req.user.id }).populate("jobId farmerId");
+        const { workerId } = req.params;
+        if (!workerId) return res.status(400).json({ message: "Worker ID is required" });
+
+        const payments = await Payment.find({ workerId }).populate("jobId farmerId");
         res.status(200).json(payments);
     } catch (error) {
-        res.status(500).json({ message: "Error retrieving payments.", error });
+        console.error("Error fetching worker payments:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 };
 
-// ✅ Confirm payment received by worker
-exports.confirmPayment = async (req, res) => {
+// ✅ Fetch All Payments for a Farmer
+exports.getFarmerPayments = async (req, res) => {
     try {
-        const { paymentId } = req.params;
+        const { farmerId } = req.params;
+        if (!farmerId) return res.status(400).json({ message: "Farmer ID is required" });
 
-        const payment = await Payment.findById(paymentId);
-        if (!payment) {
-            return res.status(404).json({ message: "Payment not found." });
+        const payments = await Payment.find({ farmerId }).populate("jobId workerId");
+        res.status(200).json(payments);
+    } catch (error) {
+        console.error("Error fetching farmer payments:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// ✅ Update Payment Status (Pending → Sent or Verified)
+exports.updatePaymentStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { paymentStatus } = req.body;
+
+        if (!paymentStatus || !["pending", "sent", "verified"].includes(paymentStatus)) {
+            return res.status(400).json({ message: "Invalid or missing payment status" });
         }
 
-        if (payment.workerId.toString() !== req.user.id) {
-            return res.status(403).json({ message: "Unauthorized to confirm this payment." });
+        const payment = await Payment.findByIdAndUpdate(id, { paymentStatus }, { new: true });
+        if (!payment) return res.status(404).json({ message: "Payment record not found" });
+
+        res.status(200).json({ message: "Payment status updated successfully", payment });
+    } catch (error) {
+        console.error("Error updating payment status:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// ✅ Worker verifies payment received
+exports.verifyWorkerPayment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const payment = await Payment.findById(id);
+        if (!payment) return res.status(404).json({ message: "Payment record not found" });
+
+        if (payment.paymentStatus !== "sent") {
+            return res.status(400).json({ message: "Payment must be in 'sent' status before verification" });
         }
 
-        payment.status = "Confirmed";
-        payment.workerConfirmation = true;
-        payment.confirmationDate = new Date();
+        payment.paymentStatus = "verified";
         await payment.save();
 
-        res.status(200).json({ message: "Payment confirmed successfully.", payment });
-
+        res.status(200).json({ message: "Worker payment verified successfully", payment });
     } catch (error) {
-        res.status(500).json({ message: "Error confirming payment.", error });
+        console.error("Error verifying worker payment:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 };

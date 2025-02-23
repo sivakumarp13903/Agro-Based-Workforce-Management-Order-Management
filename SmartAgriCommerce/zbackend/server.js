@@ -68,7 +68,7 @@ const adminRoutes = require("./src/routes/admin.routes");
 const otpRoutes = require("./src/routes/otpRoutes");
 const paymentRoutes = require("./src/routes/payment.router");
 const jobApplicationRoutes = require("./src/routes/jobApplication.routes");
-const workProgressRoutes = require("./src/routes/workProgress.routes");  // Added work progress routes
+const workProgressRoutes = require("./src/routes/workProgress.routes"); 
 
 // Initialize Express App
 const app = express();
@@ -93,7 +93,7 @@ app.use("/api/jobs", jobRoutes);
 app.use("/api", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", otpRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/job-applications", jobApplicationRoutes);
 app.use("/api/workprogress", workProgressRoutes);  // Added work progress route
 

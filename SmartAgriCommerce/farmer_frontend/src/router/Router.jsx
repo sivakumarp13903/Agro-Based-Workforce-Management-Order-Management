@@ -6,7 +6,6 @@ import Login from "../components/Auth/Login/Login";
 import FarmerDashboard from "../components/Dashboard/FarmerDashboard";
 import ApplicationsList from "../components/EmployeeManagement/Dashboard/JobApplications/ApplicationsList";
 import FarmerEmpNavigation from "../components/EmployeeManagement/FarmerEmpNavigation";
-import PaymentProcess from "../components/EmployeeManagement/Dashboard/PaymentProcess/PaymentProcess";
 import PostJob from "../components/EmployeeManagement/Dashboard/PostJob/PostJob";
 import AvailableJobs from "../components/Dashboard/WorkerDashboard/AvailableJobs";
 import AppliedJobs from "../components/Dashboard/WorkerDashboard/AppliedJobs";
@@ -15,6 +14,8 @@ import WorkerDashboard from "../components/Dashboard/WorkerDashboard/WorkerDashb
 import WorkerNavigation from "../components/Dashboard/WorkerDashboard/WorkerNavigation";
 import WorkProgressByFarmer from "../components/EmployeeManagement/Dashboard/SlotAllotment/WorkProgressByFarmer";
 import WorkProgressByWorker from "../components/Dashboard/WorkerDashboard/WorkProgressByWorker";
+import PaymentProgressByWorker from "../components/Dashboard/WorkerDashboard/paymentProgressByWorker";
+import PaymentProgressByFarmer from "../components/EmployeeManagement/Dashboard/PaymentProcess/PaymentProcessByFarmer";
 
 /* Layout for Farmer Employee Management */
 const FarmerEmpLayout = () => {
@@ -75,7 +76,7 @@ const AppRoutes = () => {
             <Route path="/recruit-management" element={<FarmerEmpLayout />}>
                 <Route path="application" element={<ApplicationsList />} />
                 <Route path="workprogress" element={<WorkProgressByFarmer />} />
-                <Route path="payment-process" element={<PaymentProcess />} />
+                <Route path="payment-process" element={<PaymentProgressByFarmer/>} />
                 <Route path="post-job" element={<PostJob />} />
             </Route>
 
@@ -84,7 +85,7 @@ const AppRoutes = () => {
                 <Route path="jobs" element={<AvailableJobs />} />
                 <Route path="applied-jobs" element={<AppliedJobs />} />
                 <Route path="accepted-jobs" element={<WorkProgressByWorker />} />
-                <Route path="payments" element={<PaymentStatus />} />
+                <Route path="payments" element={<PaymentProgressByWorker/>} />
             </Route>
         </Routes>
     );
